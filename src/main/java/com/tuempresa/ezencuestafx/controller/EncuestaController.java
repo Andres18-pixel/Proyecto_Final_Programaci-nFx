@@ -13,14 +13,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
-import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -228,7 +227,7 @@ public class EncuestaController {
         }
     }
 
-    // ==================== EXPORTAR A WORD ====================
+    // ==================== EXPORTAR ENCUESTA A UN ARCHIVO WORD DOCX ====================
 
     @FXML
     private void handleExportarWord() {
@@ -237,10 +236,16 @@ public class EncuestaController {
             return;
         }
 
+        // Generar nombre dinámico limpio basado en el título de la encuesta
+        String tituloRaw = encuestaActual.getTitulo();
+        String nombreBase = (tituloRaw == null || tituloRaw.isBlank())
+                ? "encuesta"
+                : tituloRaw.trim().replaceAll("[\\\\/:*?\"<>|]", "_");
+
         FileChooser fc = new FileChooser();
         fc.setTitle("Guardar encuesta como Word");
         fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Documento Word (*.docx)", "*.docx"));
-        fc.setInitialFileName("encuesta.docx");
+        fc.setInitialFileName(nombreBase + ".docx");
 
         File archivo = fc.showSaveDialog(txtTituloEncuesta.getScene().getWindow());
         if (archivo != null) {
@@ -254,63 +259,129 @@ public class EncuestaController {
     }
 
     private void exportarWord(File destino) throws IOException {
-        try (XWPFDocument doc = new XWPFDocument();
-             FileOutputStream out = new FileOutputStream(destino)) {
+        try (FileOutputStream out = new FileOutputStream(destino);
+             XWPFDocument doc = new XWPFDocument()) {
 
-            // Título
+            // 1. Título Principal
             String titulo = (encuestaActual.getTitulo() == null || encuestaActual.getTitulo().isBlank())
-                    ? "Sin Título" : encuestaActual.getTitulo();
+                    ? "Encuesta Sin Título" : encuestaActual.getTitulo().trim();
+
             XWPFParagraph pTitulo = doc.createParagraph();
             pTitulo.setAlignment(ParagraphAlignment.CENTER);
-            pTitulo.setSpacingAfter(300);
+            pTitulo.setSpacingAfter(100);
             XWPFRun rTitulo = pTitulo.createRun();
+            rTitulo.setFontFamily("Calibri");
             rTitulo.setBold(true);
             rTitulo.setFontSize(20);
+            rTitulo.setColor("1E293B");
             rTitulo.setText(titulo);
 
-            // Preguntas
+            // 2. Subtítulo con Fecha e Instrucciones
+            String fechaActual = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            XWPFParagraph pSubtitulo = doc.createParagraph();
+            pSubtitulo.setAlignment(ParagraphAlignment.CENTER);
+            pSubtitulo.setBorderBottom(Borders.SINGLE);
+            pSubtitulo.setSpacingAfter(300);
+            XWPFRun rSubtitulo = pSubtitulo.createRun();
+            rSubtitulo.setFontFamily("Calibri");
+            rSubtitulo.setFontSize(10);
+            rSubtitulo.setColor("64748B");
+            rSubtitulo.setText("Fecha: " + fechaActual + "   |   Complete cada apartado según se indica. Los campos con (*) son obligatorios.");
+
+            // 3. Preguntas
             int numero = 1;
             for (Pregunta p : encuestaActual.getPreguntas()) {
                 XWPFParagraph pEnunciado = doc.createParagraph();
-                pEnunciado.setSpacingBefore(200);
+                pEnunciado.setSpacingBefore(240);
+                pEnunciado.setSpacingAfter(80);
+                pEnunciado.setKeepNext(true); // Evita que la pregunta quede separada de sus opciones al cambiar de página
+
                 XWPFRun rEnunciado = pEnunciado.createRun();
+                rEnunciado.setFontFamily("Calibri");
                 rEnunciado.setBold(true);
                 rEnunciado.setFontSize(12);
-                rEnunciado.setText(numero + ". " + p.getEnunciado() + (p.isObligatoria() ? " *" : " (Opcional)"));
+                rEnunciado.setColor("0F172A");
+                rEnunciado.setText(numero + ". " + p.getEnunciado());
 
+                XWPFRun rEstado = pEnunciado.createRun();
+                rEstado.setFontFamily("Calibri");
+                rEstado.setFontSize(11);
+                if (p.isObligatoria()) {
+                    rEstado.setBold(true);
+                    rEstado.setColor("DC2626"); // Rojo para obligatoria
+                    rEstado.setText(" *");
+                } else {
+                    rEstado.setItalic(true);
+                    rEstado.setColor("64748B"); // Gris para opcional
+                    rEstado.setText(" (Opcional)");
+                }
+
+                // Renderizar espacio de respuesta según tipo
                 switch (p.getTipo()) {
                     case TEXTO:
-                        doc.createParagraph().createRun().setText("Respuesta: ______________________________________");
+                        crearCajaRespuesta(doc, "100%", " ", 2);
                         break;
+
                     case NUMERICA:
-                        doc.createParagraph().createRun().setText("Respuesta (numérica): ______________");
+                        crearCajaRespuesta(doc, "35%", "Valor numérico:", 1);
                         break;
+
                     case SELECCION_UNICA:
                         for (String opcion : p.getOpciones()) {
-                            doc.createParagraph().createRun().setText("(   )  " + opcion);
+                            agregarOpcionWord(doc, "○   " + opcion);
                         }
                         break;
+
                     case SELECCION_MULTIPLE:
                         for (String opcion : p.getOpciones()) {
-                            doc.createParagraph().createRun().setText("[   ]  " + opcion);
+                            agregarOpcionWord(doc, "☐   " + opcion);
                         }
-                        break;
-                    default:
                         break;
                 }
                 numero++;
             }
 
-            // Nota final
+            // 4. Pie de documento
             XWPFParagraph pNota = doc.createParagraph();
             pNota.setSpacingBefore(400);
             XWPFRun rNota = pNota.createRun();
+            rNota.setFontFamily("Calibri");
             rNota.setItalic(true);
             rNota.setFontSize(9);
+            rNota.setColor("64748B");
             rNota.setText("* Pregunta obligatoria");
 
             doc.write(out);
         }
+    }
+
+    private void crearCajaRespuesta(XWPFDocument doc, String anchoPorcentaje, String textoGuia, int lineasAltura) {
+        XWPFTable tabla = doc.createTable(1, 1);
+        tabla.setWidth(anchoPorcentaje);
+        XWPFTableCell celda = tabla.getRow(0).getCell(0);
+        celda.setColor("F8FAFC");
+
+        XWPFParagraph pCelda = celda.getParagraphs().get(0);
+        pCelda.setSpacingBefore(60);
+        pCelda.setSpacingAfter(60 * lineasAltura);
+
+        XWPFRun rGuia = pCelda.createRun();
+        rGuia.setFontFamily("Calibri");
+        rGuia.setFontSize(9);
+        rGuia.setItalic(true);
+        rGuia.setColor("94A3B8");
+        rGuia.setText(textoGuia);
+    }
+
+    private void agregarOpcionWord(XWPFDocument doc, String texto) {
+        XWPFParagraph pOpcion = doc.createParagraph();
+        pOpcion.setIndentationLeft(360);
+        pOpcion.setSpacingAfter(50);
+        XWPFRun rOpcion = pOpcion.createRun();
+        rOpcion.setFontFamily("Calibri");
+        rOpcion.setFontSize(11);
+        rOpcion.setColor("1E293B");
+        rOpcion.setText(texto);
     }
 
     // =========================================================

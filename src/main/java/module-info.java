@@ -1,6 +1,7 @@
 module com.tuempresa.ezencuestafx {
     requires javafx.controls;
     requires javafx.fxml;
+    requires org.apache.poi.ooxml;
 
     opens com.tuempresa.ezencuestafx to javafx.fxml;
     opens com.tuempresa.ezencuestafx.controller to javafx.fxml;
