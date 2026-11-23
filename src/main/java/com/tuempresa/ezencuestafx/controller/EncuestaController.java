@@ -12,7 +12,16 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -87,7 +96,7 @@ public class EncuestaController {
             return;
         }
 
-        Pregunta nueva = new Pregunta(enunciado, tipo, obligatoria, opcionesTemporales);
+        Pregunta nueva = new Pregunta(enunciado, tipo, obligatoria, new ArrayList<>(opcionesTemporales));
         encuestaActual.agregarPregunta(nueva);
 
         limpiarFormulario();
@@ -218,6 +227,93 @@ public class EncuestaController {
                 return true;
         }
     }
+
+    // ==================== EXPORTAR A WORD ====================
+
+    @FXML
+    private void handleExportarWord() {
+        if (encuestaActual.getPreguntas().isEmpty()) {
+            mostrarAlerta(Alert.AlertType.INFORMATION, "Encuesta vacía", "Agrega al menos una pregunta para exportar.");
+            return;
+        }
+
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Guardar encuesta como Word");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Documento Word (*.docx)", "*.docx"));
+        fc.setInitialFileName("encuesta.docx");
+
+        File archivo = fc.showSaveDialog(txtTituloEncuesta.getScene().getWindow());
+        if (archivo != null) {
+            try {
+                exportarWord(archivo);
+                mostrarAlerta(Alert.AlertType.INFORMATION, "Exportación exitosa", "Documento guardado en:\n" + archivo.getAbsolutePath());
+            } catch (IOException e) {
+                mostrarAlerta(Alert.AlertType.ERROR, "Error", "No se pudo guardar el archivo:\n" + e.getMessage());
+            }
+        }
+    }
+
+    private void exportarWord(File destino) throws IOException {
+        try (XWPFDocument doc = new XWPFDocument();
+             FileOutputStream out = new FileOutputStream(destino)) {
+
+            // Título
+            String titulo = (encuestaActual.getTitulo() == null || encuestaActual.getTitulo().isBlank())
+                    ? "Sin Título" : encuestaActual.getTitulo();
+            XWPFParagraph pTitulo = doc.createParagraph();
+            pTitulo.setAlignment(ParagraphAlignment.CENTER);
+            pTitulo.setSpacingAfter(300);
+            XWPFRun rTitulo = pTitulo.createRun();
+            rTitulo.setBold(true);
+            rTitulo.setFontSize(20);
+            rTitulo.setText(titulo);
+
+            // Preguntas
+            int numero = 1;
+            for (Pregunta p : encuestaActual.getPreguntas()) {
+                XWPFParagraph pEnunciado = doc.createParagraph();
+                pEnunciado.setSpacingBefore(200);
+                XWPFRun rEnunciado = pEnunciado.createRun();
+                rEnunciado.setBold(true);
+                rEnunciado.setFontSize(12);
+                rEnunciado.setText(numero + ". " + p.getEnunciado() + (p.isObligatoria() ? " *" : " (Opcional)"));
+
+                switch (p.getTipo()) {
+                    case TEXTO:
+                        doc.createParagraph().createRun().setText("Respuesta: ______________________________________");
+                        break;
+                    case NUMERICA:
+                        doc.createParagraph().createRun().setText("Respuesta (numérica): ______________");
+                        break;
+                    case SELECCION_UNICA:
+                        for (String opcion : p.getOpciones()) {
+                            doc.createParagraph().createRun().setText("(   )  " + opcion);
+                        }
+                        break;
+                    case SELECCION_MULTIPLE:
+                        for (String opcion : p.getOpciones()) {
+                            doc.createParagraph().createRun().setText("[   ]  " + opcion);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                numero++;
+            }
+
+            // Nota final
+            XWPFParagraph pNota = doc.createParagraph();
+            pNota.setSpacingBefore(400);
+            XWPFRun rNota = pNota.createRun();
+            rNota.setItalic(true);
+            rNota.setFontSize(9);
+            rNota.setText("* Pregunta obligatoria");
+
+            doc.write(out);
+        }
+    }
+
+    // =========================================================
 
     private void limpiarFormulario() {
         txtEnunciado.clear();
