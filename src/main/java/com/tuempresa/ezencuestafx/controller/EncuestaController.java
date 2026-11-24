@@ -133,11 +133,17 @@ public class EncuestaController {
             Button btnBorrar = new Button("X");
             btnBorrar.setStyle("-fx-background-color: #EF4444; -fx-text-fill: white; -fx-font-size: 10px;");
             btnBorrar.setOnAction(e -> {
-                encuestaActual.eliminarPregunta(p); // borra la pregunta de la encuesta
-                controlesRespuesta.remove(p); // quita su campo de respuesta del mapa controlesRespuesta
-                renderizarVistaPrevia(); //actualiza la vista previa.
+                Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION,
+                        "¿Seguro que deseas eliminar la pregunta \"" + p.getEnunciado() + "\"?",
+                        ButtonType.YES, ButtonType.NO);
+                confirmacion.setTitle("Eliminar pregunta");
+                confirmacion.setHeaderText(null);
+                if (confirmacion.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
+                    encuestaActual.eliminarPregunta(p);
+                    controlesRespuesta.remove(p);
+                    renderizarVistaPrevia();
+                }
             });
-
             header.getChildren().addAll(lblPregunta, btnBorrar);
             tarjeta.getChildren().add(header);
 
