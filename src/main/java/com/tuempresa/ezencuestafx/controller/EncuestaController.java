@@ -37,6 +37,7 @@ public class EncuestaController {
 
     @FXML private Label lblPreviewTitulo;
     @FXML private VBox contenedorPreguntasPreview;
+    @FXML private Label lblContador;
 
     private final Encuesta encuestaActual = new Encuesta("Nueva Encuesta");
     private final ObservableList<String> opcionesTemporales = FXCollections.observableArrayList();
@@ -58,6 +59,8 @@ public class EncuestaController {
             boxOpcionesConfig.setVisible(requiereOpciones);
             boxOpcionesConfig.setManaged(requiereOpciones);
         });
+
+        renderizarVistaPrevia();
     }
 
     @FXML
@@ -154,6 +157,15 @@ public class EncuestaController {
 
             contenedorPreguntasPreview.getChildren().add(tarjeta);
             numero++;
+        }
+
+        int total = encuestaActual.getPreguntas().size();
+        lblContador.setText("(" + total + (total == 1 ? " pregunta)" : " preguntas)"));
+
+        if (total == 0) {
+            Label vacio = new Label("Aún no hay preguntas. Agrega una desde el panel izquierdo.");
+            vacio.setStyle("-fx-text-fill: #94A3B8; -fx-font-style: italic;");
+            contenedorPreguntasPreview.getChildren().add(vacio);
         }
     }
 

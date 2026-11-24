@@ -95,6 +95,7 @@
                                         <Font name="System Bold" size="16.0" />
                                     </font>
                                 </Label>
+                                <Label fx:id="lblContador" text="(0 preguntas)" textFill="#64748B" />
                                 <Button fx:id="btnValidarEncuesta" mnemonicParsing="false" onAction="#handleValidarRespuestas" style="-fx-background-color: #16A34A; -fx-text-fill: white; -fx-font-weight: bold;" text="Probar Validación" />
                             </children>
                         </HBox>
