@@ -270,6 +270,11 @@ public class EncuestaController {
                 return true;
         }
     }
+    @FXML
+    private void handleLimpiarRespuestas() {
+        controlesRespuesta.clear();
+        renderizarVistaPrevia();
+    }
 
     // ==================== EXPORTAR ENCUESTA A UN ARCHIVO WORD DOCX ====================
 

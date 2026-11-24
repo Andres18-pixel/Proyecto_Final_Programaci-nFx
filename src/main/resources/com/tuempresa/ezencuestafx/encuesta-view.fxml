@@ -97,6 +97,7 @@
                                 </Label>
                                 <Label fx:id="lblContador" text="(0 preguntas)" textFill="#64748B" />
                                 <Button fx:id="btnValidarEncuesta" mnemonicParsing="false" onAction="#handleValidarRespuestas" style="-fx-background-color: #16A34A; -fx-text-fill: white; -fx-font-weight: bold;" text="Probar Validación" />
+                                <Button mnemonicParsing="false" onAction="#handleLimpiarRespuestas" style="-fx-background-color: #64748B; -fx-text-fill: white;" text="Limpiar respuestas" />
                             </children>
                         </HBox>
                         <Separator />
