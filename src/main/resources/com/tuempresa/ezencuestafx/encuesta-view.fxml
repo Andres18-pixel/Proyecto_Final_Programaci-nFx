@@ -40,7 +40,7 @@
                         <Separator />
 
                         <Label text="Enunciado de la pregunta:" />
-                        <TextField fx:id="txtEnunciado" promptText="Escribe aquí tu pregunta..." />
+                        <TextField fx:id="txtEnunciado" onAction="#handleAgregarPregunta" promptText="Escribe aquí tu pregunta..." />
 
                         <Label text="Tipo de respuesta:" />
                         <ComboBox fx:id="cmbTipoPregunta" maxWidth="1.7976931348623157E308" />
@@ -60,7 +60,7 @@
                                 </Label>
                                 <HBox spacing="8.0">
                                     <children>
-                                        <TextField fx:id="txtNuevaOpcion" promptText="Texto de la opción..." HBox.hgrow="ALWAYS" />
+                                        <TextField fx:id="txtNuevaOpcion" onAction="#handleAgregarOpcion" promptText="Texto de la opción..." HBox.hgrow="ALWAYS" />
                                         <Button fx:id="btnAgregarOpcion" mnemonicParsing="false" onAction="#handleAgregarOpcion" style="-fx-background-color: #334155; -fx-text-fill: white;" text="+ Añadir" />
                                     </children>
                                 </HBox>
