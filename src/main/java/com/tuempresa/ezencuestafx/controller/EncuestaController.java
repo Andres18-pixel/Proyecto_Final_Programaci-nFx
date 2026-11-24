@@ -214,7 +214,7 @@ public class EncuestaController {
         }
 
         if (errores.length() > 0) {
-            mostrarAlerta(Alert.AlertType.ERROR, "Validación Fallida", "Faltan respuestas obligatorias:\n\n" + errores);
+            mostrarAlerta(Alert.AlertType.ERROR, "Validación Fallida", "Se encontraron los siguientes problemas:\n\n" + errores);
         } else {
             mostrarAlerta(Alert.AlertType.INFORMATION, "Validación Exitosa", "¡Todas las reglas de la encuesta se cumplieron correctamente!");
         }
