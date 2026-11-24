@@ -63,11 +63,23 @@ public class EncuestaController {
     @FXML
     private void handleAgregarOpcion() {
         String opcion = txtNuevaOpcion.getText().trim();
-        if (!opcion.isEmpty() && !opcionesTemporales.contains(opcion)) {
-            opcionesTemporales.add(opcion);
-            txtNuevaOpcion.clear();
-            txtNuevaOpcion.requestFocus();
+
+        if (opcion.isEmpty()) {
+            mostrarAlerta(Alert.AlertType.WARNING, "Opción vacía", "Escribe el texto de la opción antes de añadirla.");
+            return;
         }
+
+        boolean yaExiste = opcionesTemporales.stream().anyMatch(o -> o.equalsIgnoreCase(opcion));
+        if (yaExiste) {
+            mostrarAlerta(Alert.AlertType.WARNING, "Opción repetida", "La opción \"" + opcion + "\" ya fue agregada a esta pregunta.");
+            txtNuevaOpcion.selectAll();
+            txtNuevaOpcion.requestFocus();
+            return;
+        }
+
+        opcionesTemporales.add(opcion);
+        txtNuevaOpcion.clear();
+        txtNuevaOpcion.requestFocus();
     }
 
     @FXML
