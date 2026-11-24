@@ -190,12 +190,25 @@ public class EncuestaController {
         int index = 1;
 
         for (Pregunta p : encuestaActual.getPreguntas()) {
-            if (p.isObligatoria()) {
-                Node control = controlesRespuesta.get(p);
-                if (!verificarSiTieneRespuesta(p, control)) {
-                    errores.append("- La pregunta #").append(index).append(" (\"").append(p.getEnunciado()).append("\") es obligatoria.\n");
+            Node control = controlesRespuesta.get(p);
+            String mensaje = null;
+
+            if (p.isObligatoria() && !verificarSiTieneRespuesta(p, control)) {
+                mensaje = "es obligatoria.";
+            } else if (p.getTipo() == TipoPregunta.NUMERICA) {
+                String valor = ((TextField) control).getText().trim();
+
+                if (!valor.isEmpty() && !valor.matches("(?:\\d+(?:\\.\\d+)?|\\.\\d+)")) {
+                    mensaje = "requiere un número válido, por ejemplo 25 o 14.5.";
                 }
             }
+
+            if (mensaje != null) {
+                errores.append("- La pregunta #").append(index)
+                        .append(" (\"").append(p.getEnunciado()).append("\") ")
+                        .append(mensaje).append('\n');
+            }
+
             index++;
         }
 
@@ -398,6 +411,7 @@ public class EncuestaController {
         alert.setTitle(titulo);
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
+        alert.getDialogPane().setPrefWidth(600); // Ancho inicial de la alerta
         alert.showAndWait();
     }
 }
