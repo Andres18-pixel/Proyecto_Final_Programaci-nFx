@@ -14,6 +14,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.apache.poi.xwpf.usermodel.*;
+import java.util.Collections;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -147,7 +148,23 @@ public class EncuestaController {
                     renderizarVistaPrevia();
                 }
             });
-            header.getChildren().addAll(lblPregunta, btnBorrar);
+            int indice = numero - 1;
+
+            Button btnSubir = new Button("↑");
+            btnSubir.setDisable(indice == 0);
+            btnSubir.setOnAction(e -> {
+                Collections.swap(encuestaActual.getPreguntas(), indice, indice - 1);
+                renderizarVistaPrevia();
+            });
+
+            Button btnBajar = new Button("↓");
+            btnBajar.setDisable(indice == encuestaActual.getPreguntas().size() - 1);
+            btnBajar.setOnAction(e -> {
+                Collections.swap(encuestaActual.getPreguntas(), indice, indice + 1);
+                renderizarVistaPrevia();
+            });
+
+            header.getChildren().addAll(lblPregunta, btnSubir, btnBajar, btnBorrar);
             tarjeta.getChildren().add(header);
 
             Node controlEntrada = controlesRespuesta.computeIfAbsent(
