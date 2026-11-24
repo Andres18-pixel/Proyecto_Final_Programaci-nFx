@@ -104,7 +104,6 @@ public class EncuestaController {
 
     private void renderizarVistaPrevia() {
         contenedorPreguntasPreview.getChildren().clear();
-        controlesRespuesta.clear();
 
         int numero = 1;
         for (Pregunta p : encuestaActual.getPreguntas()) {
@@ -122,15 +121,17 @@ public class EncuestaController {
             Button btnBorrar = new Button("X");
             btnBorrar.setStyle("-fx-background-color: #EF4444; -fx-text-fill: white; -fx-font-size: 10px;");
             btnBorrar.setOnAction(e -> {
-                encuestaActual.eliminarPregunta(p);
-                renderizarVistaPrevia();
+                encuestaActual.eliminarPregunta(p); // borra la pregunta de la encuesta
+                controlesRespuesta.remove(p); // quita su campo de respuesta del mapa controlesRespuesta
+                renderizarVistaPrevia(); //actualiza la vista previa.
             });
 
             header.getChildren().addAll(lblPregunta, btnBorrar);
             tarjeta.getChildren().add(header);
 
-            Node controlEntrada = crearControlParaPregunta(p);
-            controlesRespuesta.put(p, controlEntrada);
+            Node controlEntrada = controlesRespuesta.computeIfAbsent(
+                    p, this::crearControlParaPregunta
+            );
             tarjeta.getChildren().add(controlEntrada);
 
             contenedorPreguntasPreview.getChildren().add(tarjeta);
