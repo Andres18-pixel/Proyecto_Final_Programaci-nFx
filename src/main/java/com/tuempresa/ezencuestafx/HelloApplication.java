@@ -1,19 +1,21 @@
 package com.tuempresa.ezencuestafx;
 
+import com.tuempresa.ezencuestafx.util.Navegacion;
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 
 public class HelloApplication extends Application {
+
+    public static final double ANCHO_AUTH = 980;
+    public static final double ALTO_AUTH = 700;
+
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("encuesta-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 1050, 680);
-        stage.setTitle("ezEncuestaFX - Constructor de Encuestas");
-        stage.setScene(scene);
+        stage.setMinWidth(820);
+        stage.setMinHeight(600);
+        Navegacion.cambiarPantalla(stage, "login-view.fxml", "ezEncuestaFX - Iniciar sesión", ANCHO_AUTH, ALTO_AUTH);
         stage.show();
     }
 

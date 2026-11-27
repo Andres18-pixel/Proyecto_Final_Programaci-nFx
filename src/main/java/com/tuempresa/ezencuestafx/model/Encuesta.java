@@ -4,6 +4,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 public class Encuesta {
+    /** Id en la base de datos (null si la encuesta todavía no se ha guardado). */
+    private Integer id;
     private String titulo;
     private final ObservableList<Pregunta> preguntas;
 
@@ -11,6 +13,9 @@ public class Encuesta {
         this.titulo = titulo;
         this.preguntas = FXCollections.observableArrayList();
     }
+
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
     public String getTitulo() { return titulo; }
     public void setTitulo(String titulo) { this.titulo = titulo; }
@@ -23,5 +28,10 @@ public class Encuesta {
 
     public void eliminarPregunta(Pregunta pregunta) {
         preguntas.remove(pregunta);
+    }
+
+    /** Indica si la encuesta ya contiene la pregunta del banco con ese id. */
+    public boolean contienePreguntaConId(Integer idPregunta) {
+        return idPregunta != null && preguntas.stream().anyMatch(p -> idPregunta.equals(p.getId()));
     }
 }

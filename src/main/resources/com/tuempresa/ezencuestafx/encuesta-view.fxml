@@ -5,82 +5,137 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane prefHeight="680.0" prefWidth="1050.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tuempresa.ezencuestafx.controller.EncuestaController">
+<BorderPane prefHeight="720.0" prefWidth="1100.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tuempresa.ezencuestafx.controller.EncuestaController">
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="15.0" style="-fx-background-color: #1E293B;" BorderPane.alignment="CENTER">
-            <padding>
-                <Insets bottom="14.0" left="20.0" right="20.0" top="14.0" />
-            </padding>
+        <VBox BorderPane.alignment="CENTER">
             <children>
-                <Label text="Constructor de Encuestas" textFill="WHITE">
-                    <font>
-                        <Font name="System Bold" size="18.0" />
-                    </font>
-                </Label>
-                <Separator orientation="VERTICAL" />
-                <Label text="Título:" textFill="#CBD5E1" />
-                <TextField fx:id="txtTituloEncuesta" prefWidth="350.0" promptText="Ej. Encuesta de Satisfacción" text="Nueva Encuesta" />
+                <!-- MENÚS -->
+                <MenuBar styleClass="barra-menu">
+                    <menus>
+                        <Menu mnemonicParsing="false" text="Archivo">
+                            <items>
+                                <MenuItem accelerator="Shortcut+N" mnemonicParsing="false" onAction="#handleNuevaEncuesta" text="Nueva encuesta" />
+                                <MenuItem accelerator="Shortcut+O" mnemonicParsing="false" onAction="#handleAbrirEncuesta" text="Abrir encuesta guardada..." />
+                                <MenuItem accelerator="Shortcut+S" mnemonicParsing="false" onAction="#handleGuardarEncuesta" text="Guardar encuesta" />
+                                <SeparatorMenuItem mnemonicParsing="false" />
+                                <MenuItem accelerator="Shortcut+E" mnemonicParsing="false" onAction="#handleExportarWord" text="Exportar a Word (.docx)" />
+                                <SeparatorMenuItem mnemonicParsing="false" />
+                                <MenuItem mnemonicParsing="false" onAction="#handleSalir" text="Salir" />
+                            </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Preguntas">
+                            <items>
+                                <MenuItem accelerator="Shortcut+B" mnemonicParsing="false" onAction="#handleUsarPreguntaGuardada" text="Usar una pregunta que ya tenía..." />
+                                <SeparatorMenuItem mnemonicParsing="false" />
+                                <MenuItem mnemonicParsing="false" onAction="#handleValidarRespuestas" text="Probar validación" />
+                                <MenuItem mnemonicParsing="false" onAction="#handleLimpiarRespuestas" text="Limpiar respuestas de la vista previa" />
+                            </items>
+                        </Menu>
+                        <Menu fx:id="menuCuenta" mnemonicParsing="false" text="Cuenta">
+                            <items>
+                                <MenuItem fx:id="itemDatosUsuario" disable="true" mnemonicParsing="false" text="Usuario" />
+                                <SeparatorMenuItem mnemonicParsing="false" />
+                                <MenuItem mnemonicParsing="false" onAction="#handleCerrarSesion" text="Cerrar sesión" />
+                            </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Ayuda">
+                            <items>
+                                <MenuItem mnemonicParsing="false" onAction="#handleAcercaDe" text="Acerca de ezEncuestaFX" />
+                            </items>
+                        </Menu>
+                    </menus>
+                </MenuBar>
+
+                <HBox alignment="CENTER_LEFT" spacing="15.0" style="-fx-background-color: #1E293B;">
+                    <padding>
+                        <Insets bottom="12.0" left="20.0" right="20.0" top="12.0" />
+                    </padding>
+                    <children>
+                        <Label text="Constructor de Encuestas" textFill="WHITE">
+                            <font>
+                                <Font name="System Bold" size="18.0" />
+                            </font>
+                        </Label>
+                        <Separator orientation="VERTICAL" />
+                        <Label text="Título:" textFill="#CBD5E1" />
+                        <TextField fx:id="txtTituloEncuesta" prefWidth="320.0" promptText="Ej. Encuesta de Satisfacción" text="Nueva Encuesta" />
+                        <Label fx:id="lblEstado" styleClass="estado-sin-guardar" text="Sin guardar" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="lblUsuario" styleClass="chip-usuario" text="Usuario" />
+                        <Button fx:id="btnGuardar" mnemonicParsing="false" onAction="#handleGuardarEncuesta" style="-fx-background-color: #16A34A; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" text="Guardar" />
+                    </children>
+                </HBox>
             </children>
-        </HBox>
+        </VBox>
     </top>
     <center>
         <SplitPane dividerPositions="0.42" BorderPane.alignment="CENTER">
             <items>
                 <!-- PANEL IZQUIERDO: CONFIGURACIÓN DE PREGUNTA -->
-                <VBox spacing="12.0" style="-fx-background-color: #F8FAFC;">
-                    <padding>
-                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                    </padding>
-                    <children>
-                        <Label text="1. Configurar Nueva Pregunta" textFill="#0F172A">
-                            <font>
-                                <Font name="System Bold" size="15.0" />
-                            </font>
-                        </Label>
-                        <Separator />
-
-                        <Label text="Enunciado de la pregunta:" />
-                        <TextField fx:id="txtEnunciado" onAction="#handleAgregarPregunta" promptText="Escribe aquí tu pregunta..." />
-
-                        <Label text="Tipo de respuesta:" />
-                        <ComboBox fx:id="cmbTipoPregunta" maxWidth="1.7976931348623157E308" />
-
-                        <CheckBox fx:id="chkObligatoria" mnemonicParsing="false" text="Pregunta obligatoria (No permitir dejar en blanco)" />
-
-                        <!-- CONTENEDOR DINÁMICO PARA OPCIONES DE SELECCIÓN -->
-                        <VBox fx:id="boxOpcionesConfig" managed="false" spacing="8.0" style="-fx-background-color: #E2E8F0; -fx-background-radius: 6;" visible="false">
+                <ScrollPane fitToWidth="true" style="-fx-background-color: #F8FAFC; -fx-background: #F8FAFC;">
+                    <content>
+                        <VBox spacing="12.0" style="-fx-background-color: #F8FAFC;">
                             <padding>
-                                <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                             </padding>
                             <children>
-                                <Label text="Opciones de respuesta:">
+                                <Label text="1. Configurar Nueva Pregunta" textFill="#0F172A">
                                     <font>
-                                        <Font name="System Bold" size="12.0" />
+                                        <Font name="System Bold" size="15.0" />
                                     </font>
                                 </Label>
-                                <HBox spacing="8.0">
+                                <Separator />
+
+                                <Label text="Enunciado de la pregunta:" />
+                                <TextField fx:id="txtEnunciado" onAction="#handleAgregarPregunta" promptText="Escribe aquí tu pregunta..." />
+
+                                <Label text="Tipo de respuesta:" />
+                                <ComboBox fx:id="cmbTipoPregunta" maxWidth="1.7976931348623157E308" />
+
+                                <CheckBox fx:id="chkObligatoria" mnemonicParsing="false" text="Pregunta obligatoria (No permitir dejar en blanco)" />
+
+                                <!-- CONTENEDOR DINÁMICO PARA OPCIONES DE SELECCIÓN -->
+                                <VBox fx:id="boxOpcionesConfig" managed="false" spacing="8.0" style="-fx-background-color: #E2E8F0; -fx-background-radius: 6;" visible="false">
+                                    <padding>
+                                        <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+                                    </padding>
                                     <children>
-                                        <TextField fx:id="txtNuevaOpcion" onAction="#handleAgregarOpcion" promptText="Texto de la opción..." HBox.hgrow="ALWAYS" />
-                                        <Button fx:id="btnAgregarOpcion" mnemonicParsing="false" onAction="#handleAgregarOpcion" style="-fx-background-color: #334155; -fx-text-fill: white;" text="+ Añadir" />
+                                        <Label text="Opciones de respuesta:">
+                                            <font>
+                                                <Font name="System Bold" size="12.0" />
+                                            </font>
+                                        </Label>
+                                        <HBox spacing="8.0">
+                                            <children>
+                                                <TextField fx:id="txtNuevaOpcion" onAction="#handleAgregarOpcion" promptText="Texto de la opción..." HBox.hgrow="ALWAYS" />
+                                                <Button fx:id="btnAgregarOpcion" mnemonicParsing="false" onAction="#handleAgregarOpcion" style="-fx-background-color: #334155; -fx-text-fill: white;" text="+ Añadir" />
+                                            </children>
+                                        </HBox>
+                                        <ListView fx:id="lstOpciones" prefHeight="130.0" />
+                                        <Button fx:id="btnEliminarOpcion" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleEliminarOpcion" text="Quitar opción seleccionada" />
                                     </children>
-                                </HBox>
-                                <ListView fx:id="lstOpciones" prefHeight="130.0" />
-                                <Button fx:id="btnEliminarOpcion" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleEliminarOpcion" text="Quitar opción seleccionada" />
+                                </VBox>
+
+                                <Button fx:id="btnAgregarPregunta" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleAgregarPregunta" style="-fx-background-color: #2563EB; -fx-text-fill: white; -fx-font-weight: bold;" text="Agregar Pregunta a la Encuesta">
+                                    <padding>
+                                        <Insets bottom="10.0" top="10.0" />
+                                    </padding>
+                                </Button>
+                                <Button fx:id="btnUsarGuardada" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleUsarPreguntaGuardada" styleClass="boton-secundario" text="Usar una pregunta que ya tenía (banco de preguntas)">
+                                    <padding>
+                                        <Insets bottom="10.0" top="10.0" />
+                                    </padding>
+                                </Button>
+                                <Separator />
+                                <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleExportarWord" style="-fx-background-color: #7C3AED; -fx-text-fill: white; -fx-font-weight: bold;" text="Exportar a Word (.docx)">
+                                    <padding>
+                                        <Insets bottom="10.0" top="10.0" />
+                                    </padding>
+                                </Button>
                             </children>
                         </VBox>
-
-                        <Button fx:id="btnAgregarPregunta" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleAgregarPregunta" style="-fx-background-color: #2563EB; -fx-text-fill: white; -fx-font-weight: bold;" text="Agregar Pregunta a la Encuesta">
-                            <padding>
-                                <Insets bottom="10.0" top="10.0" />
-                            </padding>
-                        </Button>
-                        <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleExportarWord" style="-fx-background-color: #7C3AED; -fx-text-fill: white; -fx-font-weight: bold;" text="Exportar a Word (.docx)">
-                            <padding>
-                                <Insets bottom="10.0" top="10.0" />
-                            </padding>
-                        </Button>
-                    </children>
-                </VBox>
+                    </content>
+                </ScrollPane>
 
                 <!-- PANEL DERECHO: VISTA PREVIA INTERACTIVA -->
                 <VBox spacing="12.0" style="-fx-background-color: #FFFFFF;">
