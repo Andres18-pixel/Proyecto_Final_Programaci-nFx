@@ -1,0 +1,189 @@
+/* ===================== Pantallas de login y registro ===================== */
+
+.fondo-auth {
+    -fx-background-color: linear-gradient(to bottom right, #0F172A 0%, #1E3A8A 45%, #2563EB 75%, #7C3AED 100%);
+}
+
+.burbuja {
+    -fx-fill: rgba(255, 255, 255, 0.07);
+}
+
+.burbuja-clara {
+    -fx-fill: rgba(255, 255, 255, 0.14);
+}
+
+.tarjeta {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-padding: 30 36 26 36;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.40), 32, 0.2, 0, 10);
+}
+
+.titulo-app {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1E293B;
+}
+
+.titulo-app-acento {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2563EB;
+}
+
+.subtitulo {
+    -fx-text-fill: #64748B;
+    -fx-font-size: 13px;
+}
+
+.etiqueta {
+    -fx-text-fill: #334155;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.campo {
+    -fx-background-color: #F1F5F9;
+    -fx-background-radius: 8;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 8;
+    -fx-padding: 8 12;
+    -fx-font-size: 13px;
+}
+
+.campo:focused {
+    -fx-background-color: white;
+    -fx-border-color: #2563EB;
+}
+
+.boton-primario {
+    -fx-background-color: #2563EB;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-background-radius: 8;
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+}
+
+.boton-primario:hover {
+    -fx-background-color: #1D4ED8;
+}
+
+.boton-primario:pressed {
+    -fx-background-color: #1E40AF;
+}
+
+.opcion-rol {
+    -fx-background-color: #F1F5F9;
+    -fx-background-radius: 8;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 8;
+    -fx-padding: 10 12;
+    -fx-text-fill: #334155;
+    -fx-cursor: hand;
+}
+
+.opcion-rol:hover {
+    -fx-border-color: #93C5FD;
+}
+
+.opcion-rol:selected {
+    -fx-background-color: #DBEAFE;
+    -fx-border-color: #2563EB;
+    -fx-text-fill: #1E3A8A;
+    -fx-font-weight: bold;
+}
+
+.mensaje-error {
+    -fx-text-fill: #DC2626;
+    -fx-font-size: 12px;
+}
+
+.mensaje-exito {
+    -fx-text-fill: #16A34A;
+    -fx-font-size: 12px;
+}
+
+.enlace {
+    -fx-text-fill: #2563EB;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+/* ===================== Constructor de encuestas ===================== */
+
+.barra-menu {
+    -fx-background-color: #0F172A;
+}
+
+/* Solo los títulos de la barra (Archivo, Preguntas...) van en texto claro */
+.barra-menu > .container > .menu-button > .label {
+    -fx-text-fill: #E2E8F0;
+}
+
+.barra-menu > .container > .menu-button:hover,
+.barra-menu > .container > .menu-button:showing {
+    -fx-background-color: #334155;
+}
+
+/* Las opciones de la lista desplegable: texto oscuro sobre fondo blanco */
+.barra-menu .context-menu .menu-item .label,
+.barra-menu .context-menu .menu-item .accelerator-text {
+    -fx-text-fill: #0F172A;
+}
+
+.barra-menu .context-menu .menu-item:focused .label,
+.barra-menu .context-menu .menu-item:focused .accelerator-text {
+    -fx-text-fill: white;
+}
+
+.barra-menu .context-menu .menu-item:disabled .label {
+    -fx-text-fill: #64748B;
+}
+
+.chip-usuario {
+    -fx-background-color: #334155;
+    -fx-background-radius: 14;
+    -fx-text-fill: #E2E8F0;
+    -fx-padding: 4 12;
+    -fx-font-size: 12px;
+}
+
+.estado-guardado {
+    -fx-text-fill: #4ADE80;
+    -fx-font-size: 12px;
+}
+
+.estado-sin-guardar {
+    -fx-text-fill: #FBBF24;
+    -fx-font-size: 12px;
+}
+
+.tarjeta-pregunta:hover {
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.15), 12, 0.1, 0, 3);
+}
+
+.badge-reutilizada {
+    -fx-background-color: #DCFCE7;
+    -fx-background-radius: 10;
+    -fx-text-fill: #166534;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8;
+}
+
+.boton-secundario {
+    -fx-background-color: white;
+    -fx-border-color: #2563EB;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #2563EB;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.boton-secundario:hover {
+    -fx-background-color: #EFF6FF;
+}

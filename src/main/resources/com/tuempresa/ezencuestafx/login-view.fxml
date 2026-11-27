@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
+<StackPane fx:id="raiz" styleClass="fondo-auth" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tuempresa.ezencuestafx.controller.LoginController">
+    <children>
+        <!-- Fondo decorativo animado -->
+        <Pane mouseTransparent="true">
+            <children>
+                <Circle fx:id="burbuja1" centerX="140.0" centerY="140.0" radius="150.0" styleClass="burbuja" />
+                <Circle fx:id="burbuja2" centerX="860.0" centerY="580.0" radius="200.0" styleClass="burbuja" />
+                <Circle fx:id="burbuja3" centerX="820.0" centerY="110.0" radius="70.0" styleClass="burbuja-clara" />
+                <Circle fx:id="burbuja4" centerX="170.0" centerY="590.0" radius="45.0" styleClass="burbuja-clara" />
+            </children>
+        </Pane>
+
+        <!-- Tarjeta de inicio de sesión -->
+        <VBox fx:id="tarjeta" maxHeight="-Infinity" maxWidth="400.0" spacing="10.0" styleClass="tarjeta">
+            <children>
+                <HBox spacing="0.0">
+                    <children>
+                        <Label styleClass="titulo-app" text="ez" />
+                        <Label styleClass="titulo-app-acento" text="Encuesta" />
+                        <Label styleClass="titulo-app" text="FX" />
+                    </children>
+                </HBox>
+                <Label styleClass="subtitulo" text="Inicia sesión para crear encuestas y reutilizar tus preguntas." wrapText="true" />
+
+                <Label styleClass="etiqueta" text="Usuario o correo">
+                    <VBox.margin>
+                        <Insets top="10.0" />
+                    </VBox.margin>
+                </Label>
+                <TextField fx:id="txtUsuario" onAction="#handleIngresar" promptText="Ej. acenteno" styleClass="campo" />
+
+                <Label styleClass="etiqueta" text="Contraseña" />
+                <PasswordField fx:id="txtContrasena" onAction="#handleIngresar" promptText="Tu contraseña" styleClass="campo" />
+
+                <Label fx:id="lblMensaje" managed="false" styleClass="mensaje-error" visible="false" wrapText="true" />
+
+                <Button fx:id="btnIngresar" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleIngresar" styleClass="boton-primario" text="Iniciar sesión">
+                    <VBox.margin>
+                        <Insets top="8.0" />
+                    </VBox.margin>
+                </Button>
+
+                <HBox alignment="CENTER" spacing="4.0">
+                    <children>
+                        <Label styleClass="subtitulo" text="¿No tienes cuenta?" />
+                        <Hyperlink onAction="#handleIrARegistro" styleClass="enlace" text="Regístrate aquí" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </children>
+</StackPane>
