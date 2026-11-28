@@ -161,8 +161,92 @@
     -fx-font-size: 12px;
 }
 
+.tarjeta-pregunta {
+    -fx-background-color: #F8FAFC;
+    -fx-background-radius: 6;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+}
+
 .tarjeta-pregunta:hover {
     -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.15), 12, 0.1, 0, 3);
+}
+
+/* La pregunta que se está editando en el panel izquierdo */
+.tarjeta-pregunta.en-edicion {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #2563EB;
+}
+
+/* Línea azul que indica dónde va a caer la pregunta que se arrastra */
+.tarjeta-pregunta.destino-arriba {
+    -fx-border-color: #2563EB #CBD5E1 #CBD5E1 #CBD5E1;
+    -fx-border-width: 3 1 1 1;
+}
+
+.tarjeta-pregunta.destino-abajo {
+    -fx-border-color: #CBD5E1 #CBD5E1 #2563EB #CBD5E1;
+    -fx-border-width: 1 1 3 1;
+}
+
+/* ---------- Íconos y botones de ícono ---------- */
+
+.icono {
+    -fx-background-color: #64748B;
+}
+
+.icono-papelera {
+    -fx-background-color: #DC2626;
+}
+
+.icono-lapiz {
+    -fx-background-color: #2563EB;
+}
+
+.icono-agarre {
+    -fx-background-color: #94A3B8;
+}
+
+.boton-icono {
+    -fx-background-color: transparent;
+    -fx-background-radius: 6;
+    -fx-padding: 5 6;
+    -fx-cursor: hand;
+}
+
+.boton-icono:hover {
+    -fx-background-color: #E2E8F0;
+}
+
+.boton-icono.peligro:hover {
+    -fx-background-color: #FEE2E2;
+}
+
+.manija-arrastre {
+    -fx-padding: 4 4;
+    -fx-background-radius: 4;
+    -fx-cursor: open-hand;
+}
+
+.manija-arrastre:hover {
+    -fx-background-color: #E2E8F0;
+}
+
+.manija-arrastre:hover .icono-agarre {
+    -fx-background-color: #475569;
+}
+
+/* ---------- Lista de opciones (panel izquierdo) ---------- */
+
+.celda-opcion.destino-arriba {
+    -fx-border-color: #2563EB transparent transparent transparent;
+    -fx-border-width: 2 0 0 0;
+}
+
+.celda-opcion.destino-abajo {
+    -fx-border-color: transparent transparent #2563EB transparent;
+    -fx-border-width: 0 0 2 0;
 }
 
 .badge-reutilizada {

@@ -10,6 +10,7 @@ import com.tuempresa.ezencuestafx.model.Pregunta;
 import com.tuempresa.ezencuestafx.model.TipoPregunta;
 import com.tuempresa.ezencuestafx.model.Usuario;
 import com.tuempresa.ezencuestafx.util.Animaciones;
+import com.tuempresa.ezencuestafx.util.Iconos;
 import com.tuempresa.ezencuestafx.util.Navegacion;
 import com.tuempresa.ezencuestafx.util.Sesion;
 import javafx.application.Platform;
@@ -18,13 +19,21 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.control.*;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -67,6 +76,8 @@ public class EncuestaController {
     @FXML private Button btnAgregarPregunta;
     @FXML private Button btnUsarGuardada;
     @FXML private Button btnGuardar;
+    @FXML private Button btnCancelarEdicion;
+    @FXML private Label lblTituloFormulario;
 
     private Encuesta encuestaActual = new Encuesta("Nueva Encuesta");
     private final ObservableList<String> opcionesTemporales = FXCollections.observableArrayList();
@@ -80,11 +91,18 @@ public class EncuestaController {
     private boolean cambiosSinGuardar = false;
     private boolean cambiandoTituloPorCodigo = false;
 
+    /** Pregunta que se está editando en el panel izquierdo (null si se está creando una nueva). */
+    private Pregunta preguntaEnEdicion;
+    /** Posición de la pregunta / opción que se está arrastrando (-1 si no se arrastra nada). */
+    private int indicePreguntaArrastrada = -1;
+    private int indiceOpcionArrastrada = -1;
+
     @FXML
     public void initialize() {
         cmbTipoPregunta.setItems(FXCollections.observableArrayList(TipoPregunta.values()));
         cmbTipoPregunta.getSelectionModel().select(TipoPregunta.TEXTO);
         lstOpciones.setItems(opcionesTemporales);
+        lstOpciones.setCellFactory(lista -> new CeldaOpcion());
 
         txtTituloEncuesta.textProperty().addListener((obs, oldVal, newVal) -> {
             encuestaActual.setTitulo(newVal);
@@ -152,32 +170,17 @@ public class EncuestaController {
     }
 
     @FXML
-    private void handleEliminarOpcion() {
-        String seleccionada = lstOpciones.getSelectionModel().getSelectedItem();
-        if (seleccionada != null) {
-            opcionesTemporales.remove(seleccionada);
-        }
-    }
-
-    @FXML
     private void handleAgregarPregunta() {
-        String enunciado = txtEnunciado.getText().trim();
-        TipoPregunta tipo = cmbTipoPregunta.getValue();
-        boolean obligatoria = chkObligatoria.isSelected();
-
-        if (enunciado.isEmpty()) {
-            mostrarAlerta(Alert.AlertType.WARNING, "Campo requerido", "Debes escribir el enunciado de la pregunta.");
+        Pregunta nueva = leerFormulario();
+        if (nueva == null) {
+            return;
+        }
+        if (preguntaEnEdicion != null) {
+            guardarEdicion(nueva);
             return;
         }
 
-        boolean requiereOpciones = (tipo == TipoPregunta.SELECCION_UNICA || tipo == TipoPregunta.SELECCION_MULTIPLE);
-        if (requiereOpciones && opcionesTemporales.size() < 2) {
-            mostrarAlerta(Alert.AlertType.WARNING, "Faltan opciones", "Agrega al menos 2 opciones para preguntas de selección.");
-            return;
-        }
-
-        Pregunta nueva = new Pregunta(enunciado, tipo, obligatoria, new ArrayList<>(opcionesTemporales));
-        if (yaEstaEnLaEncuesta(nueva)) {
+        if (yaEstaEnLaEncuesta(nueva, null)) {
             mostrarAlerta(Alert.AlertType.WARNING, "Pregunta repetida",
                     "Esa misma pregunta (con el mismo tipo y opciones) ya está en la encuesta.");
             return;
@@ -197,12 +200,105 @@ public class EncuestaController {
         Animaciones.resaltar(lblContador);
     }
 
-    /** Compara enunciado (sin importar mayúsculas), tipo y opciones con las preguntas de la encuesta. */
-    private boolean yaEstaEnLaEncuesta(Pregunta nueva) {
-        return encuestaActual.getPreguntas().stream().anyMatch(p ->
-                p.getEnunciado().trim().equalsIgnoreCase(nueva.getEnunciado().trim())
-                        && p.getTipo() == nueva.getTipo()
-                        && p.getOpciones().equals(nueva.getOpciones()));
+    /** Lee y valida el formulario del panel izquierdo. @return la pregunta, o null si falta algo. */
+    private Pregunta leerFormulario() {
+        String enunciado = txtEnunciado.getText().trim();
+        TipoPregunta tipo = cmbTipoPregunta.getValue();
+        boolean obligatoria = chkObligatoria.isSelected();
+
+        if (enunciado.isEmpty()) {
+            mostrarAlerta(Alert.AlertType.WARNING, "Campo requerido", "Debes escribir el enunciado de la pregunta.");
+            return null;
+        }
+
+        boolean requiereOpciones = (tipo == TipoPregunta.SELECCION_UNICA || tipo == TipoPregunta.SELECCION_MULTIPLE);
+        if (requiereOpciones && opcionesTemporales.size() < 2) {
+            mostrarAlerta(Alert.AlertType.WARNING, "Faltan opciones", "Agrega al menos 2 opciones para preguntas de selección.");
+            return null;
+        }
+
+        // Si el tipo no es de selección, no se guardan opciones aunque hayan quedado escritas
+        List<String> opciones = requiereOpciones ? new ArrayList<>(opcionesTemporales) : new ArrayList<>();
+        return new Pregunta(enunciado, tipo, obligatoria, opciones);
+    }
+
+    /**
+     * Compara enunciado (sin importar mayúsculas), tipo y opciones con las preguntas de la encuesta.
+     * @param ignorar pregunta que no se toma en cuenta (la que se está editando), o null
+     */
+    private boolean yaEstaEnLaEncuesta(Pregunta nueva, Pregunta ignorar) {
+        return encuestaActual.getPreguntas().stream().anyMatch(p -> p != ignorar
+                && p.getEnunciado().trim().equalsIgnoreCase(nueva.getEnunciado().trim())
+                && p.getTipo() == nueva.getTipo()
+                && p.getOpciones().equals(nueva.getOpciones()));
+    }
+
+    // ==================== EDITAR UNA PREGUNTA (ÍCONO DE LÁPIZ) ====================
+
+    /** Carga la pregunta en el panel izquierdo para modificarla. */
+    private void entrarEnEdicion(Pregunta p, int numero) {
+        preguntaEnEdicion = p;
+        txtEnunciado.setText(p.getEnunciado());
+        cmbTipoPregunta.setValue(p.getTipo());
+        chkObligatoria.setSelected(p.isObligatoria());
+        opcionesTemporales.setAll(p.getOpciones());
+        txtNuevaOpcion.clear();
+
+        lblTituloFormulario.setText("Editando pregunta #" + numero);
+        btnAgregarPregunta.setText("Guardar cambios de la pregunta");
+        btnCancelarEdicion.setVisible(true);
+        btnCancelarEdicion.setManaged(true);
+
+        renderizarVistaPrevia();
+        txtEnunciado.requestFocus();
+        txtEnunciado.positionCaret(txtEnunciado.getText().length());
+        Animaciones.resaltar(lblTituloFormulario);
+    }
+
+    private void guardarEdicion(Pregunta datos) {
+        Pregunta p = preguntaEnEdicion;
+        if (yaEstaEnLaEncuesta(datos, p)) {
+            mostrarAlerta(Alert.AlertType.WARNING, "Pregunta repetida",
+                    "Ya hay otra pregunta igual (mismo texto, tipo y opciones) en la encuesta.");
+            return;
+        }
+
+        boolean cambioContenido = !p.getEnunciado().equals(datos.getEnunciado())
+                || p.getTipo() != datos.getTipo()
+                || !p.getOpciones().equals(datos.getOpciones());
+
+        p.setObligatoria(datos.isObligatoria());
+        if (cambioContenido) {
+            p.setEnunciado(datos.getEnunciado());
+            p.setTipo(datos.getTipo());
+            p.setOpciones(new ArrayList<>(datos.getOpciones()));
+            // La versión editada se guarda como otra pregunta del banco, para no
+            // modificar las encuestas guardadas que usan la pregunta original.
+            p.setId(null);
+            p.setReutilizada(false);
+            guardarEnBanco(p);
+            controlesRespuesta.remove(p); // se vuelve a crear el campo de respuesta con el nuevo tipo
+        }
+
+        salirDeEdicion();
+        porAnimar.add(p);
+        marcarCambios();
+        renderizarVistaPrevia();
+    }
+
+    @FXML
+    private void handleCancelarEdicion() {
+        salirDeEdicion();
+        renderizarVistaPrevia();
+    }
+
+    private void salirDeEdicion() {
+        preguntaEnEdicion = null;
+        limpiarFormulario();
+        lblTituloFormulario.setText("1. Configurar Nueva Pregunta");
+        btnAgregarPregunta.setText("Agregar Pregunta a la Encuesta");
+        btnCancelarEdicion.setVisible(false);
+        btnCancelarEdicion.setManaged(false);
     }
 
     /** Guarda la pregunta en el banco del usuario para que pueda reutilizarla en otras encuestas. */
@@ -227,18 +323,31 @@ public class EncuestaController {
         for (Pregunta p : encuestaActual.getPreguntas()) {
             VBox tarjeta = new VBox(8);
             tarjeta.setPadding(new Insets(12));
-            tarjeta.setStyle("-fx-border-color: #CBD5E1; -fx-border-radius: 6; -fx-background-color: #F8FAFC; -fx-background-radius: 6;");
             tarjeta.getStyleClass().add("tarjeta-pregunta");
+            if (p == preguntaEnEdicion) {
+                tarjeta.getStyleClass().add("en-edicion");
+            }
 
-            HBox header = new HBox(10);
+            HBox header = new HBox(8);
             String textoObligatoria = p.isObligatoria() ? " *" : " (Opcional)";
             Label lblPregunta = new Label(numero + ". " + p.getEnunciado() + textoObligatoria);
             lblPregunta.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: " + (p.isObligatoria() ? "#0F172A;" : "#475569;"));
             lblPregunta.setWrapText(true);
             HBox.setHgrow(lblPregunta, Priority.ALWAYS);
 
-            Button btnBorrar = new Button("X");
-            btnBorrar.setStyle("-fx-background-color: #EF4444; -fx-text-fill: white; -fx-font-size: 10px;");
+            int indice = numero - 1;
+            int numeroPregunta = numero;
+
+            // Manija ⠿: se arrastra para cambiar la pregunta de lugar
+            StackPane manija = new StackPane(Iconos.agarre());
+            manija.getStyleClass().add("manija-arrastre");
+            Tooltip.install(manija, new Tooltip("Arrastra para cambiar el orden"));
+            configurarArrastrePregunta(manija, tarjeta, indice);
+
+            Button btnEditar = botonIcono(Iconos.lapiz(), "Editar pregunta", false);
+            btnEditar.setOnAction(e -> entrarEnEdicion(p, numeroPregunta));
+
+            Button btnBorrar = botonIcono(Iconos.papelera(), "Eliminar pregunta", true);
             btnBorrar.setOnAction(e -> {
                 Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION,
                         "¿Seguro que deseas eliminar la pregunta \"" + p.getEnunciado() + "\"?",
@@ -247,6 +356,9 @@ public class EncuestaController {
                 confirmacion.setHeaderText(null);
                 if (confirmacion.showAndWait().orElse(ButtonType.NO) == ButtonType.YES) {
                     Animaciones.desaparecer(tarjeta, () -> {
+                        if (p == preguntaEnEdicion) {
+                            salirDeEdicion();
+                        }
                         encuestaActual.eliminarPregunta(p);
                         controlesRespuesta.remove(p);
                         marcarCambios();
@@ -255,32 +367,16 @@ public class EncuestaController {
                     });
                 }
             });
-            int indice = numero - 1;
 
-            Button btnSubir = new Button("↑");
-            btnSubir.setDisable(indice == 0);
-            btnSubir.setOnAction(e -> {
-                Collections.swap(encuestaActual.getPreguntas(), indice, indice - 1);
-                marcarCambios();
-                renderizarVistaPrevia();
-            });
-
-            Button btnBajar = new Button("↓");
-            btnBajar.setDisable(indice == encuestaActual.getPreguntas().size() - 1);
-            btnBajar.setOnAction(e -> {
-                Collections.swap(encuestaActual.getPreguntas(), indice, indice + 1);
-                marcarCambios();
-                renderizarVistaPrevia();
-            });
-
-            header.getChildren().add(lblPregunta);
+            header.setAlignment(Pos.CENTER_LEFT);
+            header.getChildren().addAll(manija, lblPregunta);
             if (p.isReutilizada()) {
                 Label badge = new Label("Reutilizada");
                 badge.getStyleClass().add("badge-reutilizada");
                 badge.setTooltip(new Tooltip("Esta pregunta viene de tu banco de preguntas"));
                 header.getChildren().add(badge);
             }
-            header.getChildren().addAll(btnSubir, btnBajar, btnBorrar);
+            header.getChildren().addAll(btnEditar, btnBorrar);
             tarjeta.getChildren().add(header);
 
             Node controlEntrada = controlesRespuesta.computeIfAbsent(
@@ -303,6 +399,176 @@ public class EncuestaController {
             vacio.setStyle("-fx-text-fill: #94A3B8; -fx-font-style: italic;");
             contenedorPreguntasPreview.getChildren().add(vacio);
             Animaciones.fundidoEntrada(vacio, 400);
+        }
+    }
+
+    /** Botón transparente que solo muestra un ícono (lápiz, papelera...). */
+    private Button botonIcono(Region icono, String ayuda, boolean peligro) {
+        Button boton = new Button();
+        boton.setGraphic(icono);
+        boton.getStyleClass().add("boton-icono");
+        if (peligro) {
+            boton.getStyleClass().add("peligro");
+        }
+        boton.setTooltip(new Tooltip(ayuda));
+        boton.setFocusTraversable(false);
+        return boton;
+    }
+
+    // ==================== ARRASTRAR PREGUNTAS PARA CAMBIAR EL ORDEN ====================
+
+    private void configurarArrastrePregunta(StackPane manija, VBox tarjeta, int indice) {
+        manija.setOnDragDetected(e -> {
+            Dragboard tablero = manija.startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent contenido = new ClipboardContent();
+            contenido.putString("pregunta-" + indice);
+            tablero.setContent(contenido);
+            SnapshotParameters parametros = new SnapshotParameters();
+            parametros.setFill(Color.TRANSPARENT);
+            tablero.setDragView(tarjeta.snapshot(parametros, null), 20, 20);
+            indicePreguntaArrastrada = indice;
+            tarjeta.setOpacity(0.4);
+            e.consume();
+        });
+
+        manija.setOnDragDone(e -> {
+            tarjeta.setOpacity(1);
+            indicePreguntaArrastrada = -1;
+            e.consume();
+        });
+
+        tarjeta.setOnDragOver(e -> {
+            if (indicePreguntaArrastrada >= 0 && indicePreguntaArrastrada != indice) {
+                e.acceptTransferModes(TransferMode.MOVE);
+                boolean abajo = e.getY() > tarjeta.getHeight() / 2;
+                tarjeta.getStyleClass().removeAll("destino-arriba", "destino-abajo");
+                tarjeta.getStyleClass().add(abajo ? "destino-abajo" : "destino-arriba");
+            }
+            e.consume();
+        });
+
+        tarjeta.setOnDragExited(e -> {
+            tarjeta.getStyleClass().removeAll("destino-arriba", "destino-abajo");
+            e.consume();
+        });
+
+        tarjeta.setOnDragDropped(e -> {
+            boolean movida = false;
+            if (indicePreguntaArrastrada >= 0) {
+                boolean abajo = e.getY() > tarjeta.getHeight() / 2;
+                moverPregunta(indicePreguntaArrastrada, abajo ? indice + 1 : indice);
+                movida = true;
+            }
+            e.setDropCompleted(movida);
+            e.consume();
+        });
+    }
+
+    private void moverPregunta(int desde, int hacia) {
+        List<Pregunta> lista = encuestaActual.getPreguntas();
+        int destino = hacia > desde ? hacia - 1 : hacia;
+        if (destino == desde) {
+            return;
+        }
+        Pregunta movida = lista.remove(desde);
+        lista.add(destino, movida);
+        porAnimar.add(movida);
+        marcarCambios();
+        Platform.runLater(this::renderizarVistaPrevia);
+    }
+
+    // ==================== OPCIONES: ARRASTRAR PARA ORDENAR Y PAPELERA ====================
+
+    private void moverOpcion(int desde, int hacia) {
+        int destino = hacia > desde ? hacia - 1 : hacia;
+        if (destino == desde || desde < 0 || desde >= opcionesTemporales.size()) {
+            return;
+        }
+        String opcion = opcionesTemporales.remove(desde);
+        opcionesTemporales.add(Math.min(destino, opcionesTemporales.size()), opcion);
+        lstOpciones.getSelectionModel().select(opcion);
+    }
+
+    /** Cada fila de la lista de opciones: manija ⠿ para arrastrar, el texto y una papelera. */
+    private class CeldaOpcion extends ListCell<String> {
+        private final HBox caja = new HBox(8);
+        private final Label texto = new Label();
+        private final StackPane manija = new StackPane(Iconos.agarre());
+        private final Button borrar = botonIcono(Iconos.papelera(), "Quitar opción", true);
+
+        CeldaOpcion() {
+            getStyleClass().add("celda-opcion");
+            manija.getStyleClass().add("manija-arrastre");
+            Tooltip.install(manija, new Tooltip("Arrastra para cambiar el orden"));
+            texto.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(texto, Priority.ALWAYS);
+            caja.setAlignment(Pos.CENTER_LEFT);
+            caja.getChildren().addAll(manija, texto, borrar);
+
+            borrar.setOnAction(e -> {
+                if (!isEmpty()) {
+                    opcionesTemporales.remove(getIndex());
+                }
+            });
+
+            manija.setOnDragDetected(e -> {
+                if (isEmpty()) {
+                    return;
+                }
+                Dragboard tablero = manija.startDragAndDrop(TransferMode.MOVE);
+                ClipboardContent contenido = new ClipboardContent();
+                contenido.putString(getItem());
+                tablero.setContent(contenido);
+                SnapshotParameters parametros = new SnapshotParameters();
+                parametros.setFill(Color.TRANSPARENT);
+                tablero.setDragView(caja.snapshot(parametros, null), 10, 10);
+                indiceOpcionArrastrada = getIndex();
+                e.consume();
+            });
+            manija.setOnDragDone(e -> {
+                indiceOpcionArrastrada = -1;
+                e.consume();
+            });
+
+            setOnDragOver(e -> {
+                if (indiceOpcionArrastrada >= 0) {
+                    e.acceptTransferModes(TransferMode.MOVE);
+                    getStyleClass().removeAll("destino-arriba", "destino-abajo");
+                    if (!isEmpty()) {
+                        getStyleClass().add(e.getY() > getHeight() / 2 ? "destino-abajo" : "destino-arriba");
+                    }
+                }
+                e.consume();
+            });
+            setOnDragExited(e -> {
+                getStyleClass().removeAll("destino-arriba", "destino-abajo");
+                e.consume();
+            });
+            setOnDragDropped(e -> {
+                boolean movida = false;
+                if (indiceOpcionArrastrada >= 0) {
+                    int desde = indiceOpcionArrastrada;
+                    int hacia = isEmpty() ? opcionesTemporales.size()
+                            : (e.getY() > getHeight() / 2 ? getIndex() + 1 : getIndex());
+                    Platform.runLater(() -> moverOpcion(desde, hacia));
+                    movida = true;
+                }
+                getStyleClass().removeAll("destino-arriba", "destino-abajo");
+                e.setDropCompleted(movida);
+                e.consume();
+            });
+        }
+
+        @Override
+        protected void updateItem(String item, boolean vacia) {
+            super.updateItem(item, vacia);
+            setText(null);
+            if (vacia || item == null) {
+                setGraphic(null);
+            } else {
+                texto.setText(item);
+                setGraphic(caja);
+            }
         }
     }
 
@@ -556,6 +822,9 @@ public class EncuestaController {
 
     /** Reemplaza la encuesta que se está editando por otra (nueva o abierta). */
     private void mostrarEncuesta(Encuesta encuesta, boolean yaGuardada) {
+        if (preguntaEnEdicion != null) {
+            salirDeEdicion();
+        }
         encuestaActual = encuesta;
         controlesRespuesta.clear();
         porAnimar.clear();

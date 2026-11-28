@@ -79,7 +79,7 @@
                                 <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                             </padding>
                             <children>
-                                <Label text="1. Configurar Nueva Pregunta" textFill="#0F172A">
+                                <Label fx:id="lblTituloFormulario" text="1. Configurar Nueva Pregunta" textFill="#0F172A">
                                     <font>
                                         <Font name="System Bold" size="15.0" />
                                     </font>
@@ -111,8 +111,7 @@
                                                 <Button fx:id="btnAgregarOpcion" mnemonicParsing="false" onAction="#handleAgregarOpcion" style="-fx-background-color: #334155; -fx-text-fill: white;" text="+ Añadir" />
                                             </children>
                                         </HBox>
-                                        <ListView fx:id="lstOpciones" prefHeight="130.0" />
-                                        <Button fx:id="btnEliminarOpcion" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleEliminarOpcion" text="Quitar opción seleccionada" />
+                                        <ListView fx:id="lstOpciones" prefHeight="150.0" />
                                     </children>
                                 </VBox>
 
@@ -121,6 +120,7 @@
                                         <Insets bottom="10.0" top="10.0" />
                                     </padding>
                                 </Button>
+                                <Button fx:id="btnCancelarEdicion" managed="false" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleCancelarEdicion" text="Cancelar edición" visible="false" />
                                 <Button fx:id="btnUsarGuardada" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleUsarPreguntaGuardada" styleClass="boton-secundario" text="Usar una pregunta que ya tenía (banco de preguntas)">
                                     <padding>
                                         <Insets bottom="10.0" top="10.0" />
